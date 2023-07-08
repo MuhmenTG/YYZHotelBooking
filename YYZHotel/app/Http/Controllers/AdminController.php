@@ -8,7 +8,11 @@ class AdminController extends Controller
 {
     //
 
-    public function createOrEditRoom(Request $request){
+    public function createRoom(Request $request){
+
+    }
+
+    public function editRoom(Request $request){
 
     }
 
@@ -20,12 +24,19 @@ class AdminController extends Controller
 
     }
 
-    public function getOneOrAllRooms(Request $request){
+    public function getSpecificRoom(int $roomId){
 
     }
 
+    public function getAllRooms(Request $request){
 
-    public function createOrEditRoomCategory(Request $request) {
+    }
+
+    public function createRoomCategory(Request $request) {
+
+    }
+    
+    public function editRoomCategory(Request $request) {
 
     }
 
@@ -37,7 +48,11 @@ class AdminController extends Controller
 
     }
 
-    public function getOneOrAllRoomCateGory(Request $request){
+    public function getOneRoomCategory(int $categoryId){
+
+    }
+    
+    public function getAllRoomCategories(Request $request){
 
     }
 
@@ -76,6 +91,13 @@ class AdminController extends Controller
 
     }
 
+    public function logRoomHistory(){
+
+    }
+
+    public function getRoomLogHistory(){
+        
+    }
     
 
 }
