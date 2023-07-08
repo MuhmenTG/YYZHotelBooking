@@ -48,6 +48,16 @@ Route::group(['prefix' => 'admin'], function () {
 
     Route::post('room-history', [AdminController::class, 'logRoomHistory']);
     Route::get('room-history', [AdminController::class, 'getRoomLogHistory']);
+
+    
+    Route::post('search-availability', [BookingController::class, 'searchRoomAvailability']);
+    Route::get('available-rooms/{roomId}', [BookingController::class, 'selectAvailableRoom']);
+    Route::post('pay-and-book', [BookingController::class, 'payAndBookRoom']);
+    Route::get('booking', [BookingController::class, 'retrieveBooking']);
+    Route::delete('booking/{reservationId}', [BookingController::class, 'deleteBooking']);
+    Route::put('booking/{reservationId}', [BookingController::class, 'modifyBooking']);
+    Route::post('booking/{reservationId}/refund', [BookingController::class, 'refundBooking']);
+    Route::post('booking/{reservationId}/cancel', [BookingController::class, 'cancelBooking']);
 });
 
 Route::group(['prefix' => 'auth'], function () {

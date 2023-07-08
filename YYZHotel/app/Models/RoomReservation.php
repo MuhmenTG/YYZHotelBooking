@@ -9,6 +9,7 @@ class RoomReservation extends Model
 {
     use HasFactory;
     
+
 	protected $table = 'room_reservations';
 	protected $primaryKey = 'id';
 //	protected $guarded = [];
@@ -20,8 +21,10 @@ class RoomReservation extends Model
 	const COL_EMAIL = 'email';
 	const COL_CONTACT = 'contact';
 	const COL_ROOMID = 'roomId';
-	const COL_CHECKINDATE = 'checkInDate';
-	const COL_CHECKOUTDATE = 'checkOutDate';
+	const COL_SCHEDULEDCHECKINDATE = 'ScheduledCheckInDate';
+	const COL_SCHEDULEDCHECKOUTDATE = 'ScheduledCheckOutDate';
+	const COL_ACTUALCHECKINDATE = 'ActualCheckInDate';
+	const COL_ACTUALCHECKOUTDATE = 'ActualCheckOutDate';
 	const COL_GUESTS = 'guests';
 	const COL_SPECIALREQUESTS = 'specialRequests';
 	const COL_ISCONFIRMED = 'isConfirmed';
@@ -85,20 +88,36 @@ class RoomReservation extends Model
 		$this->roomId = $value;
 	}
 
-	public function getCheckInDate() {
-		return $this->checkInDate;
+	public function getScheduledCheckInDate() {
+		return $this->ScheduledCheckInDate;
 	}
 
-	public function setCheckInDate($value) {
-		$this->checkInDate = $value;
+	public function setScheduledCheckInDate($value) {
+		$this->ScheduledCheckInDate = $value;
 	}
 
-	public function getCheckOutDate() {
-		return $this->checkOutDate;
+	public function getScheduledCheckOutDate() {
+		return $this->ScheduledCheckOutDate;
 	}
 
-	public function setCheckOutDate($value) {
-		$this->checkOutDate = $value;
+	public function setScheduledCheckOutDate($value) {
+		$this->ScheduledCheckOutDate = $value;
+	}
+
+	public function getActualCheckInDate() {
+		return $this->ActualCheckInDate;
+	}
+
+	public function setActualCheckInDate($value) {
+		$this->ActualCheckInDate = $value;
+	}
+
+	public function getActualCheckOutDate() {
+		return $this->ActualCheckOutDate;
+	}
+
+	public function setActualCheckOutDate($value) {
+		$this->ActualCheckOutDate = $value;
 	}
 
 	public function getGuests() {
@@ -141,4 +160,5 @@ class RoomReservation extends Model
 	public function getUpdatedAt() {
 		return $this->updated_at;
 	}
+
 }

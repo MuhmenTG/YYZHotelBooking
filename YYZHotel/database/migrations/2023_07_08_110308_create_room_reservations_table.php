@@ -18,8 +18,10 @@ return new class extends Migration
             $table->string('email');
             $table->string('contact');
             $table->unsignedBigInteger('roomId');
-            $table->date('checkInDate');
-            $table->date('checkOutDate');
+            $table->date('ScheduledCheckInDate');
+            $table->date('ScheduledCheckOutDate');
+            $table->date('ActualCheckInDate')->nullable();
+            $table->date('ActualCheckOutDate')->nullable();
             $table->unsignedInteger('guests');
             $table->text('specialRequests')->nullable();
             $table->boolean('isConfirmed')->default(false);

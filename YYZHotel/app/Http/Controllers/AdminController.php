@@ -98,6 +98,11 @@ class AdminController extends Controller
     public function getRoomLogHistory(){
         
     }
+
+    public function updateHotelInfo(){
+        
+    }
+
     
 
 }
