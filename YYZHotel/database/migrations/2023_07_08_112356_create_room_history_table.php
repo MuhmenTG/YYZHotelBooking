@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_cases', function (Blueprint $table) {
+        Schema::create('room_history', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email');
-            $table->string('subject');
-            $table->string('reservationId')->nullable();
-            $table->text('message');
-            $table->integer("time");
-            $table->boolean('isSolved')->default(0);
+            $table->unsignedBigInteger('roomId');
+            $table->date('checkOutDate');
+            $table->date('checkInDate');
+            $table->integer('guestNumber');
             $table->timestamps();
+
         });
     }
 
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_cases');
+        Schema::dropIfExists('room_history');
     }
 };

@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('payment', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('reservationId');
+            $table->decimal('amount', 8, 2);
+            $table->string('paymentMethod');
+            $table->string('paymentCurrency');
+            $table->string('lastFourDigit')->nullable();
+            $table->dateTime('paymentDate');
             $table->timestamps();
         });
     }
