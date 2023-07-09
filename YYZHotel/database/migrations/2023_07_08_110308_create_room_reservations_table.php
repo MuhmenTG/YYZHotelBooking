@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('room_reservations', function (Blueprint $table) {
             $table->id();
             $table->string('confirmationNumber');
+            $table->date('bookingDate');
             $table->string('headGuest');
             $table->string('email');
             $table->string('contact');
@@ -24,7 +25,7 @@ return new class extends Migration
             $table->date('ActualCheckOutDate')->nullable();
             $table->unsignedInteger('guests');
             $table->text('specialRequests')->nullable();
-            $table->boolean('isConfirmed')->default(false);
+            $table->boolean('isConfirmed')->default(true);
             $table->string('paymentId');
             $table->timestamps();
         });

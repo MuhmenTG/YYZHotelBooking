@@ -1,43 +1,113 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Factories\BookingFactory;
+use App\Helper\Constants;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 class BookingController extends Controller
 {
     //
 
     public function seachRoomAvaliability(Request $request){
+    
+        $validator = Validator::make($request->all(), [
+        'checkInDate' => 'required|date',
+        'checkOutDate' => 'required|date|after:checkInDate',
+        ]);
+    
+        if ($validator->fails()) {
+            return Constants::validationErrorResponse($validator->errors());
+        }
+        
+        $checkInDate = Carbon::parse($request->input('checkInDate'));
+        $checkOutDate = Carbon::parse($request->input('checkOutDate'));
 
+        $avaliableRooms = BookingFactory::getAllAvailableRooms($checkInDate, $checkOutDate);
+
+        return response()->json([
+            'avaliableRooms' => $avaliableRooms
+        ]);
     }
 
     public function selectAvailiableRoom(int $roomId){
+        $room = BookingFactory::lookUpRoom($roomId);
 
+        if(!$room){
+            return response()->json(['message' => Constants::ROOM_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
+        }
+
+        $avaliableConfirm = BookingFactory::getSelectedRoomInfo($room);
+
+        if(!$avaliableConfirm){
+            return response()->json(['message' => Constants::ROOM_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
+        }
+
+        return response()->json([
+            'roomDetails' => $avaliableConfirm
+        ]);
     }
 
     public function payAndBookRoom(Request $request){
 
     }
 
+    public function retrieveBooking(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'confirmationNumber' => 'required|string',
+        ]);
 
-    public function retriveBooking(Request $request){
+        if ($validator->fails()) {
+            return Constants::validationErrorResponse($validator->errors());
+        }
+
+        $confirmationNumber = $request->input('confirmationNumber');
+        $reservation = BookingFactory::lookUpRoomReservation($confirmationNumber);
+
+        if (!$reservation) {
+            return response()->json([
+                'message' => Constants::ROOM_RESERVATION_NOT_FOUND_MESSAGE
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        return response()->json([
+            'reservation' => $reservation
+        ]);
+    }
+
+    public function deleteBooking(string $confirmationNumber){
+        $reservation = BookingFactory::lookUpRoomReservation($confirmationNumber);
+        if(!$reservation && $reservation == null){
+            return response()->json(['message' => Constants::ROOM_RESERVATION_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
+        }
+
+        $deleteReservation = BookingFactory::removeRoomReservation($confirmationNumber);
+        if($deleteReservation){ 
+            return response()->json([
+                'message' => Constants::ROOM_RESERVATION_DELETED_MESSAGE
+            ], Response::HTTP_OK);
+        }
+
+        return response()->json([
+            'message' => Constants::ROOM_RESERVATION_DELETION_FAILED_MESSAGE
+        ], Response::HTTP_BAD_REQUEST);
+    }
+
+    public function modifyBooking(Request $request){
 
     }
 
-    public function deleteBooking(int $reservationId){
+    public function refundBooking(string $confirmationNumber){
 
     }
 
-    public function modifyBooking(int $reservationId){
-
-    }
-
-    public function refundBooking(int $reservationId){
-
-    }
-
-    public function cancelBooking(int $reservationId){
+    public function cancelBooking(string $confirmationNumber){
 
     }
 }

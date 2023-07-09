@@ -17,6 +17,7 @@ class RoomReservation extends Model
 
 	const COL_ID = 'id';
 	const COL_CONFIRMATIONNUMBER = 'confirmationNumber';
+	const COL_BOOKINGDATE = 'bookingDate';
 	const COL_HEADGUEST = 'headGuest';
 	const COL_EMAIL = 'email';
 	const COL_CONTACT = 'contact';
@@ -40,6 +41,9 @@ class RoomReservation extends Model
 		$query->where('id', $val);
 	}
 
+	public function scopeByConfirmationNumber($query, $val) {
+		$query->where('confirmationNumber', $val);
+	}
 	/*
 	 * GET / SET
 	 */
@@ -54,6 +58,14 @@ class RoomReservation extends Model
 
 	public function setConfirmationNumber($value) {
 		$this->confirmationNumber = $value;
+	}
+	
+	public function getBookingDate() {
+		return $this->bookingDate;
+	}
+
+	public function setBookingDate($value) {
+		$this->bookingDate = $value;
 	}
 
 	public function getHeadGuest() {

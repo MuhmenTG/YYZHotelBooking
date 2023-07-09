@@ -23,11 +23,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix' => 'admin'], function () {
-    Route::post('rooms', [AdminController::class, 'createRoom']);
-    Route::put('rooms/{roomId}', [AdminController ::class, 'updateRoom']);
-    Route::delete('rooms/{roomId}', [AdminController::class, 'removeRoom']);
-    Route::get('rooms/{roomId}', [AdminController::class, 'getSpecificRoom']);
-    Route::get('rooms', [AdminController::class, 'getAllRooms']);
+    Route::post('createRoom', [AdminController::class, 'createRoom']);
+    Route::post('editRoom', [AdminController ::class, 'editRoom']);
+    Route::delete('removeRoom/{roomId}', [AdminController::class, 'removeRoom']);
+    Route::get('retriveRoomSpecs/{roomId}', [AdminController::class, 'getSpecificRoom']);
+    Route::get('getAllRooms', [AdminController::class, 'getAllRooms']);
 
     Route::post('room-categories', [AdminController::class, 'createRoomCategory']);
     Route::put('room-categories/{categoryId}', [AdminController::class, 'updateRoomCategory']);
@@ -46,8 +46,9 @@ Route::group(['prefix' => 'admin'], function () {
     Route::put('user-reviews-ratings/{id}', [AdminController::class, 'markUserReviewsRating']);
     Route::delete('user-reviews-ratings/{id}', [AdminController::class, 'deleteUserReviewsRating']);
 
-    Route::post('room-history', [AdminController::class, 'logRoomHistory']);
     Route::get('room-history', [AdminController::class, 'getRoomLogHistory']);
+    Route::get('search-Bookings-Between-Two-BookingDates', [AdminController::class, 'searchBookingsBetweenTwoBookingDates']);
+    Route::get('search-Bookings-Between-CheckInDate-CheckOutDate', [AdminController::class, 'searchBookingsBetweenCheckInDateCheckOutDate']);
 
     
     Route::post('search-availability', [BookingController::class, 'searchRoomAvailability']);
