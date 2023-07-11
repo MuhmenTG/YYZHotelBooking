@@ -5,8 +5,6 @@ namespace App\Factories;
 use App\Models\Room;
 use App\Models\RoomReservation;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Date;
-use Termwind\Components\Raw;
 
 class BookingFactory {
 
