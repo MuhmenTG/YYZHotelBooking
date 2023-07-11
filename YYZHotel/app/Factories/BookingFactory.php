@@ -85,11 +85,20 @@ class BookingFactory {
         $availableRooms = [];
 
         foreach ($allRooms as $room) {
-            $bookings = RoomReservation::where(RoomReservation::COL_ROOMID, $room->getRoomId())
-            ->where(RoomReservation::COL_SCHEDULEDCHECKINDATE, '<=', $scheduledCheckOutDate)
-            ->where(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '>=', $scheduledCheckInDate)
-            ->get();
-
+              $bookings = RoomReservation::where(RoomReservation::COL_ROOMID, $room->getRoomId())
+            ->where(function ($query) use ($scheduledCheckInDate, $scheduledCheckOutDate) {
+                $query->where(function ($query) use ($scheduledCheckInDate, $scheduledCheckOutDate) {
+                    $query->where(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $scheduledCheckInDate)
+                        ->where(RoomReservation::COL_SCHEDULEDCHECKINDATE, '<', $scheduledCheckOutDate);
+                })->orWhere(function ($query) use ($scheduledCheckInDate, $scheduledCheckOutDate) {
+                    $query->where(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '>', $scheduledCheckInDate)
+                        ->where(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $scheduledCheckOutDate);
+                })->orWhere(function ($query) use ($scheduledCheckInDate, $scheduledCheckOutDate) {
+                    $query->where(RoomReservation::COL_SCHEDULEDCHECKINDATE, '<=', $scheduledCheckInDate)
+                        ->where(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '>=', $scheduledCheckOutDate);
+                });
+            })->get();
+    
             if ($bookings->isEmpty()) {
                 $availableRooms[] = $room;
             }
