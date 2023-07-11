@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Factories\BookingFactory;
 use App\Helper\Constants;
+use App\Http\Resources\RomResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -14,7 +15,7 @@ class BookingController extends Controller
 {
     //
 
-    public function seachRoomAvaliability(Request $request){
+    public function searchRoomAvailability(Request $request){
     
         $validator = Validator::make($request->all(), [
         'checkInDate' => 'required|date',
@@ -29,6 +30,8 @@ class BookingController extends Controller
         $checkOutDate = Carbon::parse($request->input('checkOutDate'));
 
         $avaliableRooms = BookingFactory::getAllAvailableRooms($checkInDate, $checkOutDate);
+
+        $avaliableRooms = RomResource::collection($avaliableRooms);
 
         return response()->json([
             'avaliableRooms' => $avaliableRooms
@@ -48,8 +51,11 @@ class BookingController extends Controller
             return response()->json(['message' => Constants::ROOM_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
         }
 
+        
+        $avaliableConfirm = new RomResource($avaliableConfirm);
+
         return response()->json([
-            'roomDetails' => $avaliableConfirm
+            'roomDeSeletiontails' => $avaliableConfirm
         ]);
     }
 

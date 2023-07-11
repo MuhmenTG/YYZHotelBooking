@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Factories\AdminFactory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,9 +18,9 @@ class RomResource extends JsonResource
         return [
             'roomName'      => $this->roomNumber,
             'roomNumber'    => $this->id,
-            'categoryId'    => $this->categoryId,
-            'GuestCapacity' => $this->capacity,
-            'pricePrNight'  => $this->price,
+            'roomCategory'    => AdminFactory::geCategoryNameById($this->categoryId),
+            'roomGuestCapacity' => $this->capacity,
+            'roomPricePrNight'  => $this->price,
             'roomDescription' => $this->description,
         ];
     }

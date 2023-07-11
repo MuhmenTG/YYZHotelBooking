@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Factories\BookingFactory;
 use App\Helper\Constants;
 use App\Http\Resources\RomResource;
+use App\Http\Resources\RoomCategoryResource;
 use App\Models\Room;
+use App\Models\RoomCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,6 +43,7 @@ class AdminController extends Controller
         $newRoom->setPrice($price);
         $newRoom->setDescription($description);
         $newRoom->save();
+
         if($newRoom){
             return new RomResource($newRoom);
         }
@@ -85,7 +88,7 @@ class AdminController extends Controller
         $newRoom->save();
 
         if($newRoom){
-            return new RomResource($room);
+            return new RomResource($newRoom);
         }
     }
     
@@ -110,6 +113,7 @@ class AdminController extends Controller
         }
 
         $room = new RomResource($room);
+
         return response()->json([
             'roomDetails' => $room
         ]);
@@ -124,8 +128,8 @@ class AdminController extends Controller
         }
 
         $rooms = RomResource::collection($rooms);
-        
-        return response()->json(['rooms' => $rooms]);
+
+        return response()->json(['rooms' => $rooms], Response::HTTP_OK);
     }
     
 
@@ -142,7 +146,18 @@ class AdminController extends Controller
 
         $name = $request->input('name');
         $description = $request->input('description');
-    }
+
+        $roomCategory = new RoomCategory();
+        $roomCategory->setName($name);
+        $roomCategory->setDescription($description);
+        $roomCategory->save();
+        
+        $roomCategory = new RoomCategoryResource($roomCategory);
+        
+        return response()->json([
+            'roomCategoryDetails' => $roomCategory
+        ], Response::HTTP_OK);
+   }
     
     public function editRoomCategory(Request $request) {
         $validator = Validator::make($request->all(), [
@@ -158,18 +173,62 @@ class AdminController extends Controller
         $categoryId = $request->input('categoryId');
         $name = $request->input('name');
         $description = $request->input('description');
+
+        $roomCategory = RoomCategory::ById($categoryId)->first();
+        if(!$roomCategory){
+            return response()->json(['message' => Constants::ROOM_CATEGORY_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
+        }
+
+        $roomCategory->setName($name);
+        $roomCategory->setDescription($description);
+        $roomCategory->save();
+
+        $roomCategory = new RoomCategoryResource($roomCategory);
+        
+        return response()->json([
+            'roomCategoryDetails' => $roomCategory
+        ], Response::HTTP_OK);
     }
 
-    public function removeRoomCateGory(int $roomId){
+    public function removeRoomCategory(int $categoryId){
 
+        $roomCategory = RoomCategory::ById($categoryId)->first();
+    
+        if (!$roomCategory) {
+            return response()->json(['message' => Constants::ROOM_CATEGORY_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
+        }
+    
+        $roomCategory->delete();
+    
+        return response()->json(['message' => 'Room category deleted successfully'], Response::HTTP_OK);
     }
 
     public function getOneRoomCategory(int $categoryId){
 
+        $roomCategory = RoomCategory::ById($categoryId)->first();
+    
+        if (!$roomCategory) {
+            return response()->json(['message' => Constants::ROOM_CATEGORY_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
+        }
+
+        $roomCategory = new RoomCategoryResource($roomCategory);
+
+        return response()->json([
+            'roomCategoryDetails' => $roomCategory
+        ], Response::HTTP_OK);
     }
     
-    public function getAllRoomCategories(Request $request){
+    public function getAllRoomCategories(){
 
+        $roomCategory = RoomCategory::all();
+    
+        if ($roomCategory->isEmpty()) {
+            return response()->json(['message' => 'No rooms found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $roomCategory = RoomCategoryResource::collection($roomCategory);
+
+        return response()->json(['Room Category' => $roomCategory], Response::HTTP_OK);
     }
     // -------------------------------------------------Categories--------------------------------------------------
 
@@ -181,6 +240,14 @@ class AdminController extends Controller
 
     
     public function checkOutGuest(Request $request){
+
+    }
+
+    public function getAllCheckedInOutGuests(){
+
+    }
+    
+    public function getUpcomingGuestBookings() {
 
     }
 

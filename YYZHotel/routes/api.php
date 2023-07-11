@@ -29,11 +29,11 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('retriveRoomSpecs/{roomId}', [AdminController::class, 'getSpecificRoom']);
     Route::get('getAllRooms', [AdminController::class, 'getAllRooms']);
 
-    Route::post('room-categories', [AdminController::class, 'createRoomCategory']);
-    Route::put('room-categories/{categoryId}', [AdminController::class, 'updateRoomCategory']);
-    Route::delete('room-categories/{categoryId}', [AdminController::class, 'removeRoomCategory']);
-    Route::get('room-categories/{categoryId}', [AdminController::class, 'getOneRoomCategory']);
-    Route::get('room-categories', [AdminController::class, 'getAllRoomCategories']);
+    Route::post('createRoomCategory', [AdminController::class, 'createRoomCategory']);
+    Route::post('updateRoomCategory', [AdminController::class, 'editRoomCategory']);
+    Route::delete('deleteRoomCategory/{categoryId}', [AdminController::class, 'removeRoomCategory']);
+    Route::get('retriveRoomCategory/{categoryId}', [AdminController::class, 'getOneRoomCategory']);
+    Route::get('getAllRoomCategory', [AdminController::class, 'getAllRoomCategories']);
 
     Route::post('check-in', [AdminController::class, 'checkInGuest']);
     Route::post('check-out', [AdminController::class, 'checkOutGuest']);
@@ -52,7 +52,7 @@ Route::group(['prefix' => 'admin'], function () {
 
     
     Route::post('search-availability', [BookingController::class, 'searchRoomAvailability']);
-    Route::get('available-rooms/{roomId}', [BookingController::class, 'selectAvailableRoom']);
+    Route::get('available-room/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
     Route::post('pay-and-book', [BookingController::class, 'payAndBookRoom']);
     Route::get('booking', [BookingController::class, 'retrieveBooking']);
     Route::delete('booking/{reservationId}', [BookingController::class, 'deleteBooking']);
@@ -68,7 +68,7 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::group(['prefix' => 'booking'], function () {
     Route::post('search-availability', [BookingController::class, 'searchRoomAvailability']);
-    Route::get('available-rooms/{roomId}', [BookingController::class, 'selectAvailableRoom']);
+    Route::get('available-rooms/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
     Route::post('pay-and-book', [BookingController::class, 'payAndBookRoom']);
     Route::get('booking', [BookingController::class, 'retrieveBooking']);
     Route::delete('booking/{reservationId}', [BookingController::class, 'deleteBooking']);
