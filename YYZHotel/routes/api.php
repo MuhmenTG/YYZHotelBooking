@@ -35,8 +35,13 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('retriveRoomCategory/{categoryId}', [AdminController::class, 'getOneRoomCategory']);
     Route::get('getAllRoomCategory', [AdminController::class, 'getAllRoomCategories']);
 
-    Route::post('check-in', [AdminController::class, 'checkInGuest']);
-    Route::post('check-out', [AdminController::class, 'checkOutGuest']);
+    Route::get('check-in/{reservationId}', [AdminController::class, 'checkInGuest']);
+    Route::get('check-out/{reservationId}', [AdminController::class, 'checkOutGuest']);
+    Route::get('getAllCheckedInOutGuests', [AdminController::class, 'getAllCheckedInOutGuests']);
+    Route::get('getUpcomingGuestBookings', [AdminController::class, 'getUpcomingGuestBookings']);
+
+    
+
 
     Route::get('occupied-rooms', [AdminController::class, 'getAllOccupiedBookedRooms']);
     Route::get('booking-amount', [AdminController::class, 'getTotalAmountOfBookings']);
@@ -46,9 +51,9 @@ Route::group(['prefix' => 'admin'], function () {
     Route::put('user-reviews-ratings/{id}', [AdminController::class, 'markUserReviewsRating']);
     Route::delete('user-reviews-ratings/{id}', [AdminController::class, 'deleteUserReviewsRating']);
 
-    Route::get('room-history', [AdminController::class, 'getRoomLogHistory']);
-    Route::get('search-Bookings-Between-Two-BookingDates', [AdminController::class, 'searchBookingsBetweenTwoBookingDates']);
-    Route::get('search-Bookings-Between-CheckInDate-CheckOutDate', [AdminController::class, 'searchBookingsBetweenCheckInDateCheckOutDate']);
+    Route::post('room-history', [AdminController::class, 'getRoomLogHistory']);
+    Route::post('search-Bookings-Between-Two-BookingDates', [AdminController::class, 'searchBookingsBetweenTwoBookingDates']);
+    Route::post('search-Bookings-Between-CheckInDate-CheckOutDate', [AdminController::class, 'searchBookingsBetweenCheckInDateCheckOutDate']);
 
     
     Route::post('search-availability', [BookingController::class, 'searchRoomAvailability']);
