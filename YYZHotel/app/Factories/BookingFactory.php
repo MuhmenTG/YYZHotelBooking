@@ -67,7 +67,8 @@ class BookingFactory {
         $roomReservation->setSpecialRequests($specialRequets);
         $roomReservation->setIsConfirmed(true);
         $roomReservation->setPaymentId($transactionId);
-        return $roomReservation->save();
+        $roomReservation->save();
+        return $roomReservation;
     }
 
 
