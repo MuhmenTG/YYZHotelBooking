@@ -50,8 +50,7 @@ class BookingController extends Controller
         if(!$avaliableConfirm){
             return response()->json(['message' => Constants::ROOM_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
         }
-
-        
+    
         $avaliableConfirm = new RomResource($avaliableConfirm);
 
         return response()->json([
