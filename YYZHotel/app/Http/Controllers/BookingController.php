@@ -104,7 +104,20 @@ class BookingController extends Controller
         ], Response::HTTP_BAD_REQUEST);
     }
 
-    public function modifyBooking(Request $request){
+    public function changeBookingGuestDetails(Request $request){
+
+    }
+
+    
+    public function changeBookingBookedRoom(Request $request){
+
+    }
+
+    public function changeBookingBookedDates(Request $request){
+
+    }
+    
+    public function changeBookingCancelBookedReservation(Request $request){
 
     }
 
@@ -112,8 +125,7 @@ class BookingController extends Controller
 
     }
 
-    public function cancelBooking(string $confirmationNumber){
-
-    }
+    
+    
 }
 
