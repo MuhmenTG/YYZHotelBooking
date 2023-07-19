@@ -47,16 +47,11 @@ class BookingFactory {
     * @param int          $numberOfGuest        The number of guests for the reservation.
     * @param string       $specialRequests      Any special requests for the reservation.
     * @param string       $transactionId        The ID of the payment transaction.
-    * @return bool                              True if the room reservation was saved successfully, false otherwise.
+    * @return RoomReservation                   RoomReservation.
     */
-    public static function createUpdateRoomReservation(?string $confirmationNumber = null, string $headGuest, string $email, string $contact, int $roomId, Carbon $scheduledCheckInDate,
+    public static function createRoomReservation(string $headGuest, string $email, string $contact, int $roomId, Carbon $scheduledCheckInDate,
     Carbon $scheduledCheckOutDate, int $numberOfGuest, string $specialRequets, string $transactionId){
-        if($confirmationNumber){
-            $roomReservation = RoomReservation::ByConfirmationNumber($confirmationNumber)->first();
-        }
-        else{
-            $roomReservation = New RoomReservation();
-        }
+        $roomReservation = New RoomReservation();
         $roomReservation->setConfirmationNumber(BookingFactory::generateConfirmationNumber());
         $roomReservation->setBookingDate(Carbon::now());
         $roomReservation->setHeadGuest($headGuest);
@@ -132,9 +127,8 @@ class BookingFactory {
         return $room;
     }
 
-    public function createCharge(int $amount, string $currency, string $cardNumber, string $expireYear, string $expireMonth, string $cvc, string $confirmationNumber) 
+    public static function createCharge(int $amount, string $currency, string $cardNumber, string $expireYear, string $expireMonth, string $cvc, string $confirmationNumber, string $description) 
     {
-        
         $stripe = BookingFactory::createCardRecord($cardNumber, $expireYear, $expireMonth, $cvc);
         
         $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
@@ -143,24 +137,22 @@ class BookingFactory {
             'amount' => $amount * 100,
             'currency' => 'dkk',
             'source' => 'tok_mastercard',
-            'description' => $confirmationNumber,
+            'description' => $description,
         ]);
         
         
         if($charge){    
             $payment = New Payment();
-            $payment->setPaymentAmount($confirmationNumber);       
+            $payment->setPaymentAmount($amount);       
             $payment->setPaymentCurrency($currency);
             $payment->setPaymentType("Online");
             $payment->setPaymentTransactionId($charge->id);
             $payment->setPaymentMethod("MasterCard");
             $payment->setPaymentGatewayProcessor("Stripe APi");
-            $payment->setPaymentNoteComments($confirmationNumber);
-            $payment->setConfirmationNumber($$amount);
+            $payment->setPaymentNoteComments($description);
+            $payment->setConfirmationNumber($confirmationNumber);
             $payment->save();
         }
-        
-        $payment = Payment::ByPaymentTransactionId($charge->id)->get();;
         return $payment;
     }
 
