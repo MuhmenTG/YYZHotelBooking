@@ -330,7 +330,6 @@ class AdminController extends Controller
 
     public function getAllOccipiedBookedRooms() {
 
-
     }
 
     public function getTotalAmmountofBookins(){
