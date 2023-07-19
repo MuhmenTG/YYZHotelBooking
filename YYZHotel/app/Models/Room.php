@@ -32,6 +32,12 @@ class Room extends Model
 		$query->where('id', $val);
 	}
 
+	
+	public function scopeByRoomNumber($query, $val) {
+		$query->where('roomNumber', $val);
+	}
+
+
 	/*
 	 * GET / SET
 	 */
