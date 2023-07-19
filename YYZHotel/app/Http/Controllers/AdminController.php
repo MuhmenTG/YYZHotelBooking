@@ -409,6 +409,8 @@ class AdminController extends Controller
     
         $bookings = RoomReservation::whereBetween(RoomReservation::COL_BOOKINGDATE, [$startDate, $endDate])->get();
 
+        $bookings = RoomReservationResource::collection($bookings);
+
         if(!$bookings){
             return response()->json(['message' => 'There are no bookings found between the dates.'], Response::HTTP_NOT_FOUND);
         }
