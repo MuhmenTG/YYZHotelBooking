@@ -214,8 +214,11 @@ class BookingController extends Controller
         $roomReservation->setSpecialRequests($specialRequests);
         $roomReservation->save();
 
+        $roomReservation = new RoomReservationResource($roomReservation);
+
+
         // Return a success response or any other response as needed.
-        return response()->json(['message' => 'Guest details updated successfully'], Response::HTTP_OK);
+        return response()->json([$roomReservation], Response::HTTP_OK);
 
     }
     
