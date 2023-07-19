@@ -40,9 +40,6 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('getAllCheckedInOutGuests', [AdminController::class, 'getAllCheckedInOutGuests']);
     Route::get('getUpcomingGuestBookings', [AdminController::class, 'getUpcomingGuestBookings']);
 
-    
-
-
     Route::get('occupied-rooms', [AdminController::class, 'getAllOccupiedBookedRooms']);
     Route::get('booking-amount', [AdminController::class, 'getTotalAmountOfBookings']);
 
@@ -54,7 +51,6 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('room-history', [AdminController::class, 'getRoomLogHistory']);
     Route::post('search-Bookings-Between-Two-BookingDates', [AdminController::class, 'searchBookingsBetweenTwoBookingDates']);
     Route::post('search-Bookings-Between-CheckInDate-CheckOutDate', [AdminController::class, 'searchBookingsBetweenCheckInDateCheckOutDate']);
-
     
     Route::post('search-availability', [BookingController::class, 'searchRoomAvailability']);
     Route::get('available-room/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
