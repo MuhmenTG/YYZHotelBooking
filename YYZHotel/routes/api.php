@@ -52,16 +52,18 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('search-Bookings-Between-Two-BookingDates', [AdminController::class, 'searchBookingsBetweenTwoBookingDates']);
     Route::post('search-Bookings-Between-CheckInDate-CheckOutDate', [AdminController::class, 'searchBookingsBetweenCheckInDateCheckOutDate']);
     
-    Route::post('search-availability', [BookingController::class, 'searchRoomAvailability']);
-    Route::get('available-room/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
-    Route::post('pay-and-book', [BookingController::class, 'payAndBookRoom']);
-    Route::get('booking', [BookingController::class, 'retrieveBooking']);
-    Route::delete('booking/{reservationId}', [BookingController::class, 'deleteBooking']);
-    Route::post('changeBooking-GuestDetails', [BookingController::class, 'changeBookingGuestDetails']);
-    Route::post('changeBooking-OnlyBookedRoom', [BookingController::class, 'changeBookingOnlyBookedRoom']);
-    Route::post('changeBooking-OnlyBookedDates', [BookingController::class, 'changeBookingOnlyBookedDates']);
-    Route::post('changeBooking-CancelBookedReservation', [BookingController::class, 'changeBookingCancelBookedReservation']);
-    Route::post('booking/{reservationId}/refund', [BookingController::class, 'refundBooking']);
+    Route::post('bookingEngine-search-availability', [BookingController::class, 'searchRoomAvailability']);
+    Route::get('bookingEngine-available-room/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
+    Route::post('bookingEngine-pay-and-book', [BookingController::class, 'payAndBookRoom']);
+
+    Route::post('bookingEngine-retrive-booking', [BookingController::class, 'retrieveBooking']);
+
+    Route::delete('bookingEngine-removeBooking/{reservationId}', [BookingController::class, 'deleteBooking']);
+    Route::post('bookingEngine-changeBooking-GuestDetails', [BookingController::class, 'changeBookingGuestDetails']);
+    Route::post('bookingEngine-changeBooking-OnlyBookedRoom', [BookingController::class, 'changeBookingOnlyBookedRoom']);
+    Route::post('bookingEngine-changeBooking-OnlyBookedDates', [BookingController::class, 'changeBookingOnlyBookedDates']);
+    Route::post('bookingEngine-changeBooking-CancelBookedReservation', [BookingController::class, 'changeBookingCancelBookedReservation']);
+    Route::get('bookingEngine-changeBookingbooking/refund{reservationId}', [BookingController::class, 'refundBooking']);
 });
 
 Route::group(['prefix' => 'auth'], function () {
@@ -69,17 +71,18 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('logout', [AuthController::class, 'logout']);
 });
 
-Route::group(['prefix' => 'booking'], function () {
-    Route::post('search-availability', [BookingController::class, 'searchRoomAvailability']);
-    Route::get('available-room/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
-    Route::post('pay-and-book', [BookingController::class, 'payAndBookRoom']);
-    Route::get('booking', [BookingController::class, 'retrieveBooking']);
-    Route::delete('booking/{reservationId}', [BookingController::class, 'deleteBooking']);
-    Route::post('changeBooking-GuestDetails', [BookingController::class, 'changeBookingGuestDetails']);
-    Route::post('changeBooking-OnlyBookedRoom', [BookingController::class, 'changeBookingOnlyBookedRoom']);
-    Route::post('changeBooking-OnlyBookedDates', [BookingController::class, 'changeBookingOnlyBookedDates']);
-    Route::post('changeBooking-CancelBookedReservation', [BookingController::class, 'changeBookingCancelBookedReservation']);
-    Route::post('booking/{reservationId}/refund', [BookingController::class, 'refundBooking']);
+Route::group(['prefix' => 'booking'], function () {  Route::post('bookingEngine-search-availability', [BookingController::class, 'searchRoomAvailability']);
+    Route::get('bookingEngine-available-room/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
+    Route::post('bookingEngine-pay-and-book', [BookingController::class, 'payAndBookRoom']);
+
+    Route::post('bookingEngine-retrive-booking', [BookingController::class, 'retrieveBooking']);
+
+    Route::delete('bookingEngine-removeBooking/{reservationId}', [BookingController::class, 'deleteBooking']);
+    Route::post('bookingEngine-changeBooking-GuestDetails', [BookingController::class, 'changeBookingGuestDetails']);
+    Route::post('bookingEngine-changeBooking-OnlyBookedRoom', [BookingController::class, 'changeBookingOnlyBookedRoom']);
+    Route::post('bookingEngine-changeBooking-OnlyBookedDates', [BookingController::class, 'changeBookingOnlyBookedDates']);
+    Route::post('bookingEngine-changeBooking-CancelBookedReservation', [BookingController::class, 'changeBookingCancelBookedReservation']);
+    Route::get('bookingEngine-changeBookingbooking/refund{reservationId}', [BookingController::class, 'refundBooking']);
 });
 
 Route::group(['prefix' => 'public'], function () {
