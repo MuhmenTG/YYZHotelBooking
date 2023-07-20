@@ -6,8 +6,10 @@ namespace App\Http\Controllers;
 
 use App\Factories\BookingFactory;
 use App\Helper\Constants;
+use App\Http\Resources\PaymentResource;
 use App\Http\Resources\RomResource;
 use App\Http\Resources\RoomReservationResource;
+use App\Models\Payment;
 use App\Models\Room;
 use App\Models\RoomReservation;
 use Carbon\Carbon;
@@ -21,8 +23,8 @@ class BookingController extends Controller
     public function searchRoomAvailability(Request $request){
     
         $validator = Validator::make($request->all(), [
-        'checkInDate' => 'required|date',
-        'checkOutDate' => 'required|date|after:checkInDate',
+        'checkInDate'   =>  'required|date',
+        'checkOutDate'  =>  'required|date|after:checkInDate',
         ]);
     
         if ($validator->fails()) {
@@ -33,6 +35,9 @@ class BookingController extends Controller
         $checkOutDate = Carbon::parse($request->input('checkOutDate'));
 
         $avaliableRooms = BookingFactory::getAllAvailableRooms($checkInDate, $checkOutDate);
+        if(empty($avaliableRooms)){
+            return response()->json(['message' => Constants::NOT_AVALIABLE_ROOMS_ON_REQUESTED_DATES], Response::HTTP_NOT_FOUND);
+        }
 
         $avaliableRooms = RomResource::collection($avaliableRooms);
 
@@ -57,27 +62,26 @@ class BookingController extends Controller
         $avaliableConfirm = new RomResource($avaliableConfirm);
 
         return response()->json([
-            'roomDeSeletiontails' => $avaliableConfirm
+            'roomSeletionDetails' => $avaliableConfirm
         ]);
     }
 
     public function payAndBookRoom(Request $request){
         $validator = Validator::make($request->all(), [
-            'headGuest' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'contact' => 'required|string|max:20',
-            'room_id' => 'required|integer',
-            'checkInDate' => 'required|date',
-            'checkOutDate' => 'required|date|after:checkInDate',
+            'headGuest'     => 'required|string|max:255',
+            'email'         => 'required|email|max:255',
+            'contact'       => 'required|string|max:20',
+            'roomId'        => 'required|string',
+            'checkInDate'   => 'required|date',
+            'checkOutDate'  => 'required|date|after:checkInDate',
             'numberOfGuest' => 'required|integer|min:1',
             'specialRequests' => 'nullable|string',
             'transactionId' => 'required|string|max:255',
-            'amount' => 'required|integer|min:1',
-            'currency' => 'required|string|max:3', 
-            'card_number' => 'required|string|digits:16',
-            'expire_year' => 'required|string|digits:4',
-            'expire_month' => 'required|string|digits:2',
-            'cvc' => 'required|string|digits:3',
+            'currency'      => 'required|string|max:3', 
+            'cardNumber'    => 'required|string|digits:16',
+            'expireYear'    => 'required|string|digits:4',
+            'expireMonth'   => 'required|string|digits:2',
+            'cvc'           => 'required|string|digits:3',
         ]);
 
         if ($validator->fails()) {
@@ -93,35 +97,38 @@ class BookingController extends Controller
         $numberOfGuest = $request->input('numberOfGuest');
         $specialRequests = $request->input('specialRequests');
         $transactionId = $request->input('transactionId');
-                
+        $currency = $request->input('currency');
+        $cardNumber = $request->input('cardNumber');
+        $expireYear = $request->input('expireYear');
+        $expireMonth = $request->input('expireMonth');
+        $cvc = $request->input('cvc');
+        
+        $roomAvaliabilityCheck = BookingFactory::validateRoomExistBetweenDates($roomId, $checkInDate, $checkOutDate);
+        if ($roomAvaliabilityCheck) {
+            return response()->json(['message' => Constants::NOT_AVALIABLE_ROOMS_ON_REQUESTED_DATES], Response::HTTP_BAD_REQUEST);
+        }
+
         $roomReservation = BookingFactory::createRoomReservation(
             $headGuest,
             $email,
             $contact,
-            $roomId,
+            intval($roomId),
             $checkInDate,
             $checkOutDate,
-            $numberOfGuest,
+            intval($numberOfGuest),
             $specialRequests,
             $transactionId
         );
 
-        $roomReservation = new RoomReservationResource($roomReservation);
-        $numberOfNightStay = $checkInDate->diffInDays($checkOutDate);
-        
-        $room = Room::ByRoomNumber($roomId)->first();
-        $pricePerNight = $room->getPrice();
-        $totalPrice = $numberOfNightStay * $pricePerNight;
-        
-        $currency = $request->input('currency');
-        $cardNumber = $request->input('card_number');
-        $expireYear = $request->input('expire_year');
-        $expireMonth = $request->input('expire_month');
-        $cvc = $request->input('cvc');
+        if(!$roomReservation){
+            return response()->json(['message' => Constants::BOOKING_COULD_NOT_BE_DONE], Response::HTTP_BAD_REQUEST);
+        }
 
-        // Call createCharge method
+        $totalPrice = BookingFactory::calculateTotalPrice($checkInDate, $checkOutDate, $roomId);
+    
+
         $payment = BookingFactory::createCharge(
-            $totalPrice,
+            floatval($totalPrice),
             $currency,
             $cardNumber,
             $expireYear,
@@ -131,6 +138,9 @@ class BookingController extends Controller
             "Issue Room Reservation"
         );
 
+        $roomReservation = new RoomReservationResource($roomReservation);
+        $payment = new PaymentResource($payment);
+        
         $fullReservationDetails = [
             'room_reservation' => $roomReservation,
             'payment' => $payment,
@@ -153,6 +163,7 @@ class BookingController extends Controller
 
         $confirmationNumber = $request->input('confirmationNumber');
         $reservation = BookingFactory::lookUpRoomReservation($confirmationNumber);
+        $payment = Payment::where(Payment::COL_CONFIRMATIONNUMBER, $confirmationNumber)->first();
 
         if (!$reservation) {
             return response()->json([
@@ -160,9 +171,17 @@ class BookingController extends Controller
             ], Response::HTTP_NOT_FOUND);
         }
 
+        $reservation = new RoomReservationResource($reservation);
+        $payment = new PaymentResource($payment);
+        
+        $fullReservationDetails = [
+            'room_reservation' => $reservation,
+            'payment' => $payment,
+        ];
+        
         return response()->json([
-            'reservation' => $reservation
-        ]);
+            $fullReservationDetails
+        ], Response::HTTP_OK);
     }
 
     public function deleteBooking(string $confirmationNumber){
@@ -172,6 +191,7 @@ class BookingController extends Controller
         }
 
         $deleteReservation = BookingFactory::removeRoomReservation($confirmationNumber);
+
         if($deleteReservation){ 
             return response()->json([
                 'message' => Constants::ROOM_RESERVATION_DELETED_MESSAGE
@@ -186,38 +206,41 @@ class BookingController extends Controller
     public function changeBookingGuestDetails(Request $request){
         $validator = Validator::make($request->all(), [
             'confirmationNumber' => 'required|string|max:255',
-            'headGuest' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'contact' => 'required|string|max:20',
-            'specialRequests' => 'nullable|string',
+            'headGuest'          => 'nullable|string|max:255',
+            'email'              => 'nullable|email|max:255',
+            'contact'            => 'nullable|string|max:20',
+            'specialRequests'    => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $confirmationNumber = $request->input('confirmationNumber');
-        $roomReservation = RoomReservation::ByConfirmationNumber($confirmationNumber)->first();
-
+        $confirmationNumber = $request->input('confirmationNumber');        
+        
+        $roomReservation = BookingFactory::lookUpRoomReservation($confirmationNumber);
         if (!$roomReservation) {
             return response()->json(['error' => 'Booking not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $headGuest = $request->input('headGuest');
-        $email = $request->input('email');
-        $contact = $request->input('contact');
-        $specialRequests = $request->input('specialRequests');
-
-        $roomReservation->setHeadGuest($headGuest);
-        $roomReservation->setEmail($email);
-        $roomReservation->setContact( $contact);
-        $roomReservation->setSpecialRequests($specialRequests);
-        $roomReservation->save();
+        if ($request->has('headGuest')) {
+            $roomReservation->setHeadGuest($request->input('headGuest'));
+        }
+    
+        if ($request->has('email')) {
+            $roomReservation->setEmail($request->input('email'));
+        }
+    
+        if ($request->has('contact')) {
+            $roomReservation->setContact($request->input('contact'));
+        }
+    
+        if ($request->has('specialRequests')) {
+            $roomReservation->setSpecialRequests($request->input('specialRequests'));
+        }    
 
         $roomReservation = new RoomReservationResource($roomReservation);
 
-
-        // Return a success response or any other response as needed.
         return response()->json([$roomReservation], Response::HTTP_OK);
 
     }
@@ -226,11 +249,11 @@ class BookingController extends Controller
         $validator = Validator::make($request->all(), [
             'confirmationNumber' => 'required|string|max:255',
             'newRequestedRoomId' => 'required|string',
-            'currency' => 'required|string|max:3', 
-            'card_number' => 'required|string|digits:16',
-            'expire_year' => 'required|string|digits:4',
-            'expire_month' => 'required|string|digits:2',
-            'cvc' => 'required|string|digits:3',
+            'currency'           => 'required|string|max:3', 
+            'card_number'        => 'required|string|digits:16',
+            'expire_year'        => 'required|string|digits:4',
+            'expire_month'       => 'required|string|digits:2',
+            'cvc'                => 'required|string|digits:3',
         ]);
 
         if ($validator->fails()) {
@@ -238,32 +261,30 @@ class BookingController extends Controller
         }
         
         $confirmationNumber = $request->input('confirmationNumber');
-        $roomReservation = RoomReservation::ByConfirmationNumber($confirmationNumber)->first();
-        $numberOfNightStay = $roomReservation->getScheduledCheckInDate()->diffInDays($roomReservation->getScheduledCheckOutDate());
-
-    
-        if (!$roomReservation) {
-            return response()->json(['error' => 'Booking not found'], 404);
-        }
-    
         $newRequestedRoomId = $request->input('newRequestedRoomId');
-        $room = BookingFactory::getSelectedRoomInfo($newRequestedRoomId);
-
-        if(!$room){
-            return response()->json(['message' => Constants::ROOM_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
-        }
-
-        $roomReservation->setRoomId($room->getRoomId());
-        $roomReservation->save();
-
-        $room = Room::ByRoomNumber($room->getRoomId())->first();
-        $pricePerNight = $room->getPrice();
-        $totalPrice = $numberOfNightStay * $pricePerNight;
-    
         $cardNumber = $request->input('card_number');
         $expireYear = $request->input('expire_year');
         $expireMonth = $request->input('expire_month');
         $cvc = $request->input('cvc');
+
+        $roomReservation = BookingFactory::lookUpRoomReservation($confirmationNumber);
+        if (!$roomReservation) {
+            return response()->json(['error' => 'Booking not found'], Response::HTTP_NOT_FOUND);
+        }
+        
+        $room = BookingFactory::lookUpRoom(intval($newRequestedRoomId));
+
+        $specificRoom = BookingFactory::getSelectedRoomInfo($room);
+        if(!$specificRoom){
+            return response()->json(['message' => Constants::ROOM_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
+        }
+        
+        $roomAvaliabilityCheck = BookingFactory::validateRoomExistBetweenDates($newRequestedRoomId, $roomReservation->getScheduledCheckInDate(), $roomReservation->getScheduledCheckOutDate());
+        if($roomAvaliabilityCheck){
+            return response()->json(['message' => Constants::NOT_AVALIABLE_ROOMS_ON_REQUESTED_DATES], Response::HTTP_BAD_REQUEST);
+        }
+
+        $totalPrice = BookingFactory::calculateTotalPrice($roomReservation->getScheduledCheckInDate(), $roomReservation->getScheduledCheckOutDate(), $newRequestedRoomId);
 
         $payment = BookingFactory::createCharge(
             $totalPrice,
@@ -275,6 +296,9 @@ class BookingController extends Controller
             $roomReservation->getConfirmationNumber(),
             "Change Room reservation"
         );
+
+        $roomReservation->setRoomId($specificRoom->getRoomId());
+        $roomReservation->save();
 
         $roomReservation = new RoomReservationResource($roomReservation);
 
@@ -307,47 +331,30 @@ class BookingController extends Controller
         }
     
         $confirmationNumber = $request->input('confirmationNumber');
-        $roomReservation = RoomReservation::ByConfirmationNumber($confirmationNumber)->first();
-    
-        if (!$roomReservation) {
-            return response()->json(['error' => 'Booking not found'], Response::HTTP_NOT_FOUND);
-        }
-    
-        $newCheckInDate = Carbon::parse($request->input('newCheckInDate'));
-        $newCheckOutDate = Carbon::parse($request->input('newCheckOutDate'));
-          $conflictingBookings = RoomReservation::where(RoomReservation::COL_ROOMID, $roomReservation->getRoomId())
-        ->where(function ($query) use ($newCheckInDate, $newCheckOutDate) {
-            $query->where(function ($query) use ($newCheckInDate, $newCheckOutDate) {
-                $query->where(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $newCheckInDate)
-                    ->where(RoomReservation::COL_SCHEDULEDCHECKINDATE, '<', $newCheckOutDate);
-            })->orWhere(function ($query) use ($newCheckInDate, $newCheckOutDate) {
-                $query->where(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '>', $newCheckInDate)
-                    ->where(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $newCheckOutDate);
-            })->orWhere(function ($query) use ($newCheckInDate, $newCheckOutDate) {
-                $query->where(RoomReservation::COL_SCHEDULEDCHECKINDATE, '<=', $newCheckInDate)
-                    ->where(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '>=', $newCheckOutDate);
-            });
-        })->get();
-
-        if (!$conflictingBookings->isEmpty()) {
-            return response()->json(['error' => 'The room is not available for the selected dates.'], Response::HTTP_CONFLICT);
-        }
-        
-        $roomReservation->setScheduledCheckInDate($newCheckInDate);
-        $roomReservation->setScheduledCheckOutDate($newCheckOutDate);
-        $roomReservation->save();
-
-        $numberOfNightStay = $newCheckInDate->diffInDays($newCheckOutDate);
-    
-        $room = Room::ByRoomNumber($roomReservation->getRoomId())->first();
-        $pricePerNight = $room->getPrice();
-        $totalPrice = $numberOfNightStay * $pricePerNight;
-    
-        $roomReservation = new RoomReservationResource($roomReservation);
         $cardNumber = $request->input('card_number');
         $expireYear = $request->input('expire_year');
         $expireMonth = $request->input('expire_month');
         $cvc = $request->input('cvc');
+        $newCheckInDate = Carbon::parse($request->input('newCheckInDate'));
+        $newCheckOutDate = Carbon::parse($request->input('newCheckOutDate'));
+        
+        $roomReservation = BookingFactory::lookUpRoomReservation($confirmationNumber);
+        if (!$roomReservation) {
+            return response()->json(['error' => 'Booking not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $roomAvaliabilityCheck = BookingFactory::validateRoomExistBetweenDates($roomReservation->getRoomId(), $newCheckInDate, $newCheckOutDate);
+        if($roomAvaliabilityCheck){
+            return response()->json(['message' => Constants::NOT_AVALIABLE_ROOMS_ON_REQUESTED_DATES], Response::HTTP_BAD_REQUEST);
+        }
+
+        $roomReservation->setScheduledCheckInDate($newCheckInDate);
+        $roomReservation->setScheduledCheckOutDate($newCheckOutDate);
+        $roomReservation->save();
+
+        $totalPrice = BookingFactory::calculateTotalPrice($newCheckInDate, $newCheckOutDate, $roomReservation->getRoomId());
+
+        $roomReservation = new RoomReservationResource($roomReservation);
         
         $payment = BookingFactory::createCharge(
             $totalPrice,
@@ -359,7 +366,9 @@ class BookingController extends Controller
             $roomReservation->getConfirmationNumber(),
             "New date change for Room reservation"
         );
-    
+
+        $payment = new PaymentResource($payment);
+
         $fullReservationDetails = [
             'room_reservation' => $roomReservation,
             'payment' => $payment,
@@ -387,9 +396,13 @@ class BookingController extends Controller
     
         $roomReservation->setIsConfirmed(false);
         $roomReservation->save();
-  
-        return response()->json(['message' => 'Booking reservation canceled successfully'], Response::HTTP_OK);
-    
+
+        $roomReservation = new RoomReservationResource($roomReservation);
+        
+        return response()->json([
+            'message' => 'Booking details updated successfully',
+            'data' => $roomReservation,
+        ], Response::HTTP_OK);    
     }
 
     public function refundBooking(string $confirmationNumber){
