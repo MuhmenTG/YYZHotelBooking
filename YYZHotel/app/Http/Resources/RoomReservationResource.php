@@ -30,7 +30,6 @@ class RoomReservationResource extends JsonResource
             'guests' => $this->guests,
             'specialRequests' => $this->specialRequests,
             'bookingStatus' => $this->isConfirmed,
-            'paymentConfirmationNumber' => $this->paymentId,
         ];
     }
 }
