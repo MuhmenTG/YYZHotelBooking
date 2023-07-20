@@ -47,7 +47,7 @@ class BookingFactory {
     * @param int          $numberOfGuest        The number of guests for the reservation.
     * @param string       $specialRequests      Any special requests for the reservation.
     * @param string       $transactionId        The ID of the payment transaction.
-    * @return RoomReservation                   RoomReservation.
+    * @return RoomReservation|bool              RoomReservation if successfully booked otherwise false.
     */
     public static function createRoomReservation(string $headGuest, string $email, string $contact, int $roomId, Carbon $scheduledCheckInDate,
     Carbon $scheduledCheckOutDate, int $numberOfGuest, string $specialRequets, string $transactionId){
@@ -64,8 +64,10 @@ class BookingFactory {
         $roomReservation->setSpecialRequests($specialRequets);
         $roomReservation->setIsConfirmed(true);
         $roomReservation->setPaymentId($transactionId);
-        $roomReservation->save();
-        return $roomReservation;
+        if($roomReservation->save()){
+            return $roomReservation;
+        }
+        return false;
     }
 
 
@@ -79,11 +81,22 @@ class BookingFactory {
     public static function getAllAvailableRooms(Carbon $scheduledCheckOutDate, Carbon $scheduledCheckInDate)
     {
         $allRooms = Room::all();
-        
         $availableRooms = [];
-
+    
         foreach ($allRooms as $room) {
-              $bookings = RoomReservation::where(RoomReservation::COL_ROOMID, $room->getRoomId())
+            $bookings = BookingFactory::validateRoomExistBetweenDates($room->getRoomId(), $scheduledCheckInDate, $scheduledCheckOutDate);
+    
+            if ($bookings->isEmpty()) {
+                $availableRooms[] = $room;
+            }
+        }
+    
+        return $availableRooms;
+    }
+    
+    public static function validateRoomExistBetweenDates($roomId, $scheduledCheckInDate, $scheduledCheckOutDate)
+    {
+        $conflictingBookings = RoomReservation::where(RoomReservation::COL_ROOMID, $roomId)
             ->where(function ($query) use ($scheduledCheckInDate, $scheduledCheckOutDate) {
                 $query->where(function ($query) use ($scheduledCheckInDate, $scheduledCheckOutDate) {
                     $query->where(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $scheduledCheckInDate)
@@ -96,15 +109,14 @@ class BookingFactory {
                         ->where(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '>=', $scheduledCheckOutDate);
                 });
             })->get();
-    
-            if ($bookings->isEmpty()) {
-                $availableRooms[] = $room;
+            if ($conflictingBookings->isEmpty()) {
+                return null; // Return null to indicate no conflicts found
             }
-        }
-
-        return $availableRooms;
+        
+        return $conflictingBookings; // Return the conflicting bookings if found
+        
     }
-
+    
     /**
     * Get information about a selected room.
     *
@@ -127,7 +139,25 @@ class BookingFactory {
         return $room;
     }
 
-    public static function createCharge(int $amount, string $currency, string $cardNumber, string $expireYear, string $expireMonth, string $cvc, string $confirmationNumber, string $description) 
+    public static function calculateTotalPrice($checkInDate, $checkOutDate, $roomId) {
+        $checkOutDate = Carbon::parse($checkOutDate);
+        $checkInDate = Carbon::parse($checkOutDate);
+    
+        $numberOfNightStay = $checkInDate->diffInDays($checkOutDate);
+    
+        $room = Room::ByRoomNumber($roomId)->first();
+    
+        if (!$room) {
+            throw new \Exception("Room with ID $roomId not found.");
+        }
+    
+        $pricePerNight = $room->getPrice();
+        $totalPrice = $numberOfNightStay * $pricePerNight;
+    
+        return $totalPrice;
+    }    
+
+    public static function createCharge(float $amount, string $currency, string $cardNumber, string $expireYear, string $expireMonth, string $cvc, string $confirmationNumber, string $description) 
     {
         $stripe = BookingFactory::createCardRecord($cardNumber, $expireYear, $expireMonth, $cvc);
         
@@ -149,6 +179,7 @@ class BookingFactory {
             $payment->setPaymentTransactionId($charge->id);
             $payment->setPaymentMethod("MasterCard");
             $payment->setPaymentGatewayProcessor("Stripe APi");
+            $payment->setPaymentStatus("Proceed");
             $payment->setPaymentNoteComments($description);
             $payment->setConfirmationNumber($confirmationNumber);
             $payment->save();
@@ -156,7 +187,7 @@ class BookingFactory {
         return $payment;
     }
 
-    private function createCardRecord(string $cardNumber, string $expYear, string $expMonth, string $cvc){
+    private static function createCardRecord(string $cardNumber, string $expYear, string $expMonth, string $cvc){
 
         if (!ctype_digit($cardNumber) || strlen($cardNumber) < 12 || strlen($cardNumber) > 19) {
             throw new \InvalidArgumentException('Invalid card numer given Should be 12 digits long.');
@@ -167,9 +198,9 @@ class BookingFactory {
             throw new \InvalidArgumentException('Invalid expiry Date of card.');
         }
         
-        if (!ctype_digit($expYear) || strlen($expYear) != 4 || $expYear < date('Y')) {
+        /*if (!ctype_digit($expYear) || strlen($expYear) != 4 || $expYear < date('Y')) {
     
-        }
+        }*/
         
         if (!ctype_digit($cvc) || strlen($cvc) < 3 || strlen($cvc) > 4) {
         
