@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Models\Room;
 use App\Models\RoomReservation;
 use Carbon\Carbon;
+use PhpParser\Node\Stmt\Echo_;
 use Stripe\BalanceTransaction;
 
 class BookingFactory {
@@ -141,10 +142,9 @@ class BookingFactory {
 
     public static function calculateTotalPrice($checkInDate, $checkOutDate, $roomId) {
         $checkOutDate = Carbon::parse($checkOutDate);
-        $checkInDate = Carbon::parse($checkOutDate);
-    
+        $checkInDate = Carbon::parse($checkInDate);
+
         $numberOfNightStay = $checkInDate->diffInDays($checkOutDate);
-    
         $room = Room::ByRoomNumber($roomId)->first();
     
         if (!$room) {
@@ -152,6 +152,7 @@ class BookingFactory {
         }
     
         $pricePerNight = $room->getPrice();
+        $pricePerNight = intval($pricePerNight);
         $totalPrice = $numberOfNightStay * $pricePerNight;
     
         return $totalPrice;
@@ -164,7 +165,7 @@ class BookingFactory {
         $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
 
         $charge = $stripe->charges->create([
-            'amount' => $amount * 100,
+            'amount' => $amount,
             'currency' => 'dkk',
             'source' => 'tok_mastercard',
             'description' => $description,

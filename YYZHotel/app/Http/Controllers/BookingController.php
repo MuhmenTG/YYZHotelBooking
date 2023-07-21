@@ -108,6 +108,7 @@ class BookingController extends Controller
             return response()->json(['message' => Constants::NOT_AVALIABLE_ROOMS_ON_REQUESTED_DATES], Response::HTTP_BAD_REQUEST);
         }
 
+
         $roomReservation = BookingFactory::createRoomReservation(
             $headGuest,
             $email,
@@ -125,10 +126,9 @@ class BookingController extends Controller
         }
 
         $totalPrice = BookingFactory::calculateTotalPrice($checkInDate, $checkOutDate, $roomId);
-    
 
         $payment = BookingFactory::createCharge(
-            floatval($totalPrice),
+            $totalPrice,
             $currency,
             $cardNumber,
             $expireYear,
