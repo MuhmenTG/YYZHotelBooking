@@ -481,7 +481,7 @@ class AdminController extends Controller
             return response()->json(['message' => 'No payment history found for the booking'], 200);
         }
 
-        $paymentHistory = RoomReservationResource::collection($paymentHistory);
+        $paymentHistory = PaymentResource::collection($paymentHistory);
 
         return response()->json($paymentHistory, 200);
     }
