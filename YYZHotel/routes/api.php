@@ -40,8 +40,7 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('getAllCheckedInOutGuests', [AdminController::class, 'getAllCheckedInOutGuests']);
     Route::get('getUpcomingGuestBookings', [AdminController::class, 'getUpcomingGuestBookings']);
 
-    Route::get('occupied-rooms', [AdminController::class, 'getAllOccupiedBookedRooms']);
-    Route::get('booking-amount', [AdminController::class, 'getTotalAmountOfBookings']);
+    Route::get('booking-amount', [AdminController::class, 'getTotalNumberOfBookings']);
 
     Route::get('user-cases', [AdminController::class, 'getAllUserCases']);
     Route::get('user-reviews-ratings', [AdminController::class, 'getAllUserReviewsRatings']);
@@ -51,6 +50,16 @@ Route::group(['prefix' => 'admin'], function () {
     Route::post('room-history', [AdminController::class, 'getRoomLogHistory']);
     Route::post('search-Bookings-Between-Two-BookingDates', [AdminController::class, 'searchBookingsBetweenTwoBookingDates']);
     Route::post('search-Bookings-Between-CheckInDate-CheckOutDate', [AdminController::class, 'searchBookingsBetweenCheckInDateCheckOutDate']);
+    Route::get('search-Bookings-getPastBookings', [AdminController::class, 'getPastBookings']);
+    Route::get('search-Bookings-getBookingsWithinThisWeek', [AdminController::class, 'getStaysWithinThisWeek']);
+    Route::get('search-Bookings-getStaysWithinThisMonth', [AdminController::class, 'getStaysWithinThisMonth']);
+    Route::get('search-Bookings-getStaysWithinThreeMonths', [AdminController::class, 'getStaysWithinThreeMonths']);
+    Route::get('search-Bookings-getAllPayment', [AdminController::class, 'getAllPayment']);
+    Route::get('search-Bookings-getTotalPaymentAmounSinceBegining', [AdminController::class, 'getTotalPaymentAmounSinceBegining']);
+    Route::get('search-Bookings-getTotalPaymentAmountThisWeek', [AdminController::class, 'getTotalPaymentAmountThisWeek']);
+    Route::get('search-Bookings-getTotalPaymentAmountThisMonth', [AdminController::class, 'getTotalPaymentAmountThisMonth']);
+    Route::get('search-Bookings-getPaymentTransaction/{transactionId}', [AdminController::class, 'getPaymentTransaction']);
+    Route::get('search-Bookings-getPaymentHistoryForBookingByConfirmtionNumber/{confirmationNumber}', [AdminController::class, 'getPaymentHistoryForBookingByConfirmtionNumber']);
     
     Route::post('bookingEngine-search-availability', [BookingController::class, 'searchRoomAvailability']);
     Route::get('bookingEngine-available-room/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
@@ -71,7 +80,8 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('logout', [AuthController::class, 'logout']);
 });
 
-Route::group(['prefix' => 'booking'], function () {  Route::post('bookingEngine-search-availability', [BookingController::class, 'searchRoomAvailability']);
+Route::group(['prefix' => 'booking'], function () {  
+    Route::post('bookingEngine-search-availability', [BookingController::class, 'searchRoomAvailability']);
     Route::get('bookingEngine-available-room/{roomId}', [BookingController::class, 'selectAvailiableRoom']);
     Route::post('bookingEngine-pay-and-book', [BookingController::class, 'payAndBookRoom']);
 
