@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Factories\BookingFactory;
 use App\Helper\Constants;
+use App\Http\Resources\PaymentResource;
 use App\Http\Resources\RomResource;
 use App\Http\Resources\RoomCategoryResource;
 use App\Http\Resources\RoomReservationResource;
@@ -389,6 +390,8 @@ class AdminController extends Controller
             return response()->json(['message' => 'No stays within the next three months'], Response::HTTP_OK);
         }
 
+        $staysWithinThreeMonths = RoomReservationResource::collection($staysWithinThreeMonths);
+
         return response()->json(['staysWithinThisWeek' => $staysWithinThreeMonths], Response::HTTP_OK);
     }
 
@@ -410,6 +413,8 @@ class AdminController extends Controller
         if ($allPayments->isEmpty()) {
             return response()->json(['message' => 'No payments found'], 200);
         }
+
+        $allPayments = PaymentResource::collection($allPayments);
 
         return response()->json($allPayments, 200);
     }
@@ -463,6 +468,8 @@ class AdminController extends Controller
             return response()->json(['message' => 'Payment transaction not found'], 404);
         }
 
+        $payment = new PaymentResource($payment);
+
         return response()->json($payment, 200);
     }
 
@@ -473,6 +480,8 @@ class AdminController extends Controller
         if ($paymentHistory->isEmpty()) {
             return response()->json(['message' => 'No payment history found for the booking'], 200);
         }
+
+        $paymentHistory = RoomReservationResource::collection($paymentHistory);
 
         return response()->json($paymentHistory, 200);
     }
