@@ -86,7 +86,7 @@ class BookingFactory {
         foreach ($allRooms as $room) {
             $bookings = BookingFactory::validateRoomExistBetweenDates($room->getRoomId(), $scheduledCheckInDate, $scheduledCheckOutDate);
     
-            if ($bookings->isEmpty()) {
+            if ($bookings === null || $bookings->isEmpty()) {
                 $availableRooms[] = $room;
             }
         }
