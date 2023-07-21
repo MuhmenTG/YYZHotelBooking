@@ -7,6 +7,7 @@ use App\Helper\Constants;
 use App\Http\Resources\RomResource;
 use App\Http\Resources\RoomCategoryResource;
 use App\Http\Resources\RoomReservationResource;
+use App\Models\Payment;
 use App\Models\Room;
 use App\Models\RoomCategory;
 use App\Models\RoomHistory;
@@ -324,17 +325,158 @@ class AdminController extends Controller
         $upcomingBookings = RoomReservationResource::collection($upcomingBookings);
 
         return response()->json(['upcomingBookings' => $upcomingBookings], Response::HTTP_OK);
+    }
+
+    public function getPastBookings(){
+        $pastBookings = RoomReservation::whereNotNull(RoomReservation::COL_ACTUALCHECKINDATE)
+        ->whereNotNull(RoomReservation::COL_ACTUALCHECKOUTDATE)
+        ->get();
+
+        if ($pastBookings->isEmpty()) {
+            return response()->json(['message' => 'There are no past booking.'], Response::HTTP_NOT_FOUND);
+        } 
+
+        $pastBookings = RoomReservationResource::collection($pastBookings);
+
+        return response()->json(['pastBookings' => $pastBookings], Response::HTTP_OK);
+    }
+
+    public function getStaysWithinThisWeek(){
+        $startOfWeek = Carbon::now()->startOfWeek(); 
+        $endOfWeek = Carbon::now()->endOfWeek(); 
+    
+        $staysWithinThisWeek = RoomReservation::whereDate(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $startOfWeek)
+            ->whereDate(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $endOfWeek)
+            ->get();
+    
+        if ($staysWithinThisWeek->isEmpty()) {
+            return response()->json(['message' => 'No stays within this week'], Response::HTTP_OK);
+        }
+    
+        $staysWithinThisWeek = RoomReservationResource::collection($staysWithinThisWeek);
+
+        return response()->json(['staysWithinThisWeek' => $staysWithinThisWeek], Response::HTTP_OK);
+    
+    }
+
+    public function getStaysWithinThisMonth(){
+        $startOfMonth = Carbon::now()->startOfMonth(); 
+        $endOfMonth = Carbon::now()->endOfMonth();
+
+        $staysWithinThisWeek = RoomReservation::whereDate(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $startOfMonth)
+            ->whereDate(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $endOfMonth)
+            ->get();
+    
+        if ($staysWithinThisWeek->isEmpty()) {
+            return response()->json(['message' => 'No stays within this month'], Response::HTTP_OK);
+        }
+    
+        $staysWithinThisWeek = RoomReservationResource::collection($staysWithinThisWeek);
+
+        return response()->json(['staysWithinThisWeek' => $staysWithinThisWeek], Response::HTTP_OK);
+    
+    }
+
+    public function getStaysWithinThreeMonths(){
+        $startOfThreeMonths = Carbon::now()->startOfMonth()->addMonths(1); 
+        $endOfThreeMonths = Carbon::now()->endOfMonth()->addMonths(3); 
+
+        $staysWithinThreeMonths = RoomReservation::whereDate(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $startOfThreeMonths)
+            ->whereDate(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $endOfThreeMonths)
+            ->get();
+
+        if ($staysWithinThreeMonths->isEmpty()) {
+            return response()->json(['message' => 'No stays within the next three months'], Response::HTTP_OK);
+        }
+
+        return response()->json(['staysWithinThisWeek' => $staysWithinThreeMonths], Response::HTTP_OK);
+    }
+
+    public function getTotalNumberOfBookings()
+    {
+        $totalBookings = RoomReservation::count();
+    
+        if ($totalBookings === 0) {
+            return response()->json(['message' => 'No bookings found'], 200);
+        }
+
+        return response()->json(['Bookings' => $totalBookings], Response::HTTP_OK);
+    }
+
+    public function getAllPayment()
+    {
+        $allPayments = Payment::all();
+
+        if ($allPayments->isEmpty()) {
+            return response()->json(['message' => 'No payments found'], 200);
+        }
+
+        return response()->json($allPayments, 200);
+    }
+
+    public function getTotalPaymentAmounSinceBegining()
+    {
+        $totalPaymentAmount = Payment::sum('paymentAmount');
+
+        if ($totalPaymentAmount === null) {
+            return response()->json(['message' => 'No payments found'], 200);
+        }
+
+        return response()->json(['Total ernings in DKK' => $totalPaymentAmount], 200);
+    }
+
+    public function getTotalPaymentAmountThisWeek()
+    {
+        $startOfWeek = Carbon::now()->startOfWeek(); 
+        $endOfWeek = Carbon::now()->endOfWeek();     
+
+        $totalPaymentAmountThisWeek = Payment::whereBetween(Payment::COL_PAYMENTTRANSACTIONDATE, [$startOfWeek, $endOfWeek])
+            ->sum('paymentAmount');
+
+        if ($totalPaymentAmountThisWeek === null) {
+            return response()->json(['message' => 'No payments found for this week'], 200);
+        }
+
+        return response()->json(['Total ernings in DKK this week' => $totalPaymentAmountThisWeek], 200);
+    }
+
+    public function getTotalPaymentAmountThisMonth()
+    {
+        $startOfMonth = Carbon::now()->startOfMonth(); 
+        $endOfMonth = Carbon::now()->endOfMonth();     
         
+        $totalPaymentAmountThisMonth = Payment::whereBetween(Payment::COL_PAYMENTTRANSACTIONDATE, [$startOfMonth, $endOfMonth])
+            ->sum('paymentAmount');
+
+        if ($totalPaymentAmountThisMonth === null) {
+            return response()->json(['message' => 'No payments found for this month'], 200);
+        }
+
+        return response()->json(['Total ernings in DKK this month' => $totalPaymentAmountThisMonth], 200);
     }
 
+    public function getPaymentTransaction(string $transactionId)
+    {
+        $payment = Payment::where(Payment::COL_PAYMENTTRANSACTIONID, $transactionId)->first();
 
-    public function getAllOccipiedBookedRooms() {
+        if (!$payment) {
+            return response()->json(['message' => 'Payment transaction not found'], 404);
+        }
 
+        return response()->json($payment, 200);
     }
 
-    public function getTotalAmmountofBookins(){
+    public function getPaymentHistoryForBookingByConfirmtionNumber(string $confirmationNumber)
+    {
+        $paymentHistory = Payment::where(Payment::COL_CONFIRMATIONNUMBER, $confirmationNumber)->get();
 
+        if ($paymentHistory->isEmpty()) {
+            return response()->json(['message' => 'No payment history found for the booking'], 200);
+        }
+
+        return response()->json($paymentHistory, 200);
     }
+
 
     public function getAllUserCaases(){
 
