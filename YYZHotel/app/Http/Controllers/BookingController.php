@@ -398,15 +398,11 @@ class BookingController extends Controller
         $roomReservation->save();
 
         $roomReservation = new RoomReservationResource($roomReservation);
-        
+
         return response()->json([
             'message' => 'Booking details updated successfully',
             'data' => $roomReservation,
         ], Response::HTTP_OK);    
-    }
-
-    public function refundBooking(string $confirmationNumber){
-
     }
 
     
