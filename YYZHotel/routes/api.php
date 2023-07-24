@@ -23,7 +23,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix' => 'admin'], function () {
-    Route::post('createRoom', [AdminController::class, 'createRoom']);
+    Route::post('createHotelRoom', [AdminController::class, 'createRoom']);
     Route::post('editRoom', [AdminController ::class, 'editRoom']);
     Route::delete('removeRoom/{roomId}', [AdminController::class, 'removeRoom']);
     Route::get('retriveRoomSpecs/{roomId}', [AdminController::class, 'getSpecificRoom']);

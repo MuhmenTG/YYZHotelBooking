@@ -23,7 +23,8 @@ class AdminController extends Controller
 {
     //
 
-    public function createRoom(Request $request){
+    public function createRoom(Request $request)
+    {
      
         $validator = Validator::make($request->all(), [
             'roomName'   => 'required|string',
@@ -38,19 +39,20 @@ class AdminController extends Controller
         }
 
         $roomName = $request->input('roomName');
-        $categoryId = intval($request->input('categoryId'));
-        $capacity = intval($request->input('capacity'));
-        $price = floatval($request->input('price'));
+        $categoryId = $request->input('categoryId');
+        $capacity = $request->input('capacity');
+        $price = $request->input('price');
         $description = $request->input('description');
 
         $newRoom = AdminFactory::createRoom($roomName, $categoryId, $capacity, $price, $description);
 
-        if($newRoom){
-            return new RomResource($newRoom);
+        if($newRoom){            
+            return response()->json(['Room' => new RomResource($newRoom)], Response::HTTP_OK);
         }
     }
 
-    public function editRoom(Request $request){
+    public function editRoom(Request $request
+    ){
 
         $validator = Validator::make($request->all(), [
             'roomId'     => 'required|numeric',
@@ -58,16 +60,14 @@ class AdminController extends Controller
             'categoryId' => 'required|numeric',
             'capacity'   => 'required|integer',
             'price'      => 'required|numeric',
-            'description'=> 'nullable|string',
+            'description'=> 'required|string',
         ]);
 
         if ($validator->fails()) {
             return Constants::validationErrorResponse($validator->errors());
         }
 
-        
         $roomId = $request->input('roomId');
-
         $roomName = $request->input('roomName');
         $categoryId = $request->input('categoryId');
         $capacity = $request->input('capacity');
@@ -76,20 +76,14 @@ class AdminController extends Controller
 
         $room = BookingFactory::lookUpRoom($roomId);
 
+        $newRoom = AdminFactory::editRoomDetails($roomId, $roomName, $categoryId, $capacity, $price, $description);
+
         if(!$room){
             return response()->json(['message' => Constants::ROOM_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
         }
 
-        $newRoom = Room::ById($roomId)->first();
-        $newRoom->setRoomNumber($roomName);
-        $newRoom->setCategoryId($categoryId);
-        $newRoom->setCapacity($capacity);
-        $newRoom->setPrice($price);
-        $newRoom->setDescription($description);
-        $newRoom->save();
-
         if($newRoom){
-            return new RomResource($newRoom);
+            return response()->json(['Room' => new RomResource($newRoom)], 200);
         }
     }
     
@@ -122,8 +116,8 @@ class AdminController extends Controller
 
     public function getAllRooms()
     {
-        $rooms = Room::all();
-    
+        $rooms = AdminFactory::getAllRooms();
+
         if ($rooms->isEmpty()) {
             return response()->json(['message' => 'No rooms found'], Response::HTTP_NOT_FOUND);
         }
@@ -147,11 +141,8 @@ class AdminController extends Controller
 
         $name = $request->input('name');
         $description = $request->input('description');
-
-        $roomCategory = new RoomCategory();
-        $roomCategory->setName($name);
-        $roomCategory->setDescription($description);
-        $roomCategory->save();
+        
+        $roomCategory = AdminFactory::createRoomCategory($name, $description);
         
         $roomCategory = new RoomCategoryResource($roomCategory);
         
@@ -171,18 +162,16 @@ class AdminController extends Controller
             return Constants::validationErrorResponse($validator->errors());
         }
 
-        $categoryId = $request->input('categoryId');
+        $categoryId = intval($request->input('categoryId'));
         $name = $request->input('name');
         $description = $request->input('description');
 
-        $roomCategory = RoomCategory::ById($categoryId)->first();
+        $roomCategory = AdminFactory::lookUpRoomCategory($categoryId);
         if(!$roomCategory){
             return response()->json(['message' => Constants::ROOM_CATEGORY_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
         }
 
-        $roomCategory->setName($name);
-        $roomCategory->setDescription($description);
-        $roomCategory->save();
+        $roomCategory = AdminFactory::editRoomCategoriesDetails($roomCategory, $description, $name);
 
         $roomCategory = new RoomCategoryResource($roomCategory);
         
@@ -193,8 +182,8 @@ class AdminController extends Controller
 
     public function removeRoomCategory(int $categoryId){
 
-        $roomCategory = RoomCategory::ById($categoryId)->first();
-    
+        $roomCategory = AdminFactory::lookUpRoomCategory($categoryId);
+
         if (!$roomCategory) {
             return response()->json(['message' => Constants::ROOM_CATEGORY_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
         }
@@ -206,8 +195,8 @@ class AdminController extends Controller
 
     public function getOneRoomCategory(int $categoryId){
 
-        $roomCategory = RoomCategory::ById($categoryId)->first();
-    
+        $roomCategory = AdminFactory::lookUpRoomCategory($categoryId);
+
         if (!$roomCategory) {
             return response()->json(['message' => Constants::ROOM_CATEGORY_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
         }
@@ -234,9 +223,11 @@ class AdminController extends Controller
     // -------------------------------------------------Categories--------------------------------------------------
 
 
+    // -------------------------------------------------Check in and out guest--------------------------------------------------
 
     public function checkInGuest(string $confirmationNumber){
         $reservation = BookingFactory::lookUpRoomReservation($confirmationNumber);
+        
         if(!$reservation && $reservation == null){
             return response()->json(['message' => Constants::ROOM_RESERVATION_NOT_FOUND_MESSAGE], Response::HTTP_NOT_FOUND);
         }
@@ -247,14 +238,11 @@ class AdminController extends Controller
             return response()->json(['message' => 'The guest can not check in before scheduled check in date'], Response::HTTP_METHOD_NOT_ALLOWED);
         }
 
-
         $reservation = new RoomReservationResource($reservation);
-
         $reservation->setActualCheckInDate($currentDate);
         $reservation->save();
 
         return response()->json(['CheckedIn' => $reservation], Response::HTTP_OK);
-
     }
 
     
@@ -271,27 +259,16 @@ class AdminController extends Controller
         $reservation->setActualCheckOutDate(Carbon::now());
         $reservation->save();
 
-        $logRoomHistory = new RoomHistory();
-        $logRoomHistory->setRoomId($reservation->getRoomId());
-        $logRoomHistory->setCheckInDate($reservation->getActualCheckInDate());
-        $logRoomHistory->setCheckInDate($reservation->getActualCheckOutDate());
-        $logRoomHistory->setGuestNumber($reservation->getGuests());
-        $logRoomHistory->save();
+        AdminFactory::logRoomHistory($reservation);
 
         $reservation = new RoomReservationResource($reservation);
-
         return response()->json(['CheckedOut' => $reservation], Response::HTTP_OK);
-
     }
 
     public function getAllCheckedInOutGuests(){
-        $checkedInGuests = RoomReservation::whereNotNull(RoomReservation::COL_ACTUALCHECKINDATE)
-        ->where(RoomReservation::COL_ACTUALCHECKINDATE, '!=', '')
-        ->get();
+        $checkedInGuests = AdminFactory::getCheckedInGuests();
 
-        $checkedOutGuests = RoomReservation::whereNotNull(RoomReservation::COL_ACTUALCHECKOUTDATE)
-        ->where(RoomReservation::COL_ACTUALCHECKOUTDATE, '!=', '')
-        ->get();
+        $checkedOutGuests = AdminFactory::getCheckedOutGuests();
 
         if ($checkedInGuests->isEmpty() && $checkedOutGuests->isEmpty()) {
             return response()->json(['message' => 'There are no checked-in or checked-out guests.'], Response::HTTP_METHOD_NOT_ALLOWED);

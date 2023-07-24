@@ -4,6 +4,9 @@ namespace App\Factories;
 
 use App\Models\Room;
 use App\Models\RoomCategory;
+use App\Models\RoomHistory;
+use App\Models\RoomReservation;
+use Illuminate\Database\Eloquent\Collection;
 
 class AdminFactory {
 
@@ -17,7 +20,12 @@ class AdminFactory {
         return $name;
     }
 
-    public static function createRoom(string $roomName, int $categoryId, int $capacity, float $price, string $description){
+    public static function lookUpRoomCategory(int $categoryId) : RoomCategory {
+        $roomCategory = RoomCategory::ById($categoryId)->first();
+        return $roomCategory;
+    }
+
+    public static function createRoom(string $roomName, string $categoryId, string $capacity, string $price, string $description){
         $newRoom = new Room();
         $newRoom->setRoomNumber($roomName);
         $newRoom->setCategoryId($categoryId);
@@ -26,5 +34,62 @@ class AdminFactory {
         $newRoom->setDescription($description);
         $newRoom->save();
         return $newRoom;
+    }
+
+    public static function editRoomDetails(string $roomId, string $roomName, string $categoryId, string $capacity, string $price, string $description){
+        $newRoom = Room::ById($roomId)->first();
+        $newRoom->setRoomNumber($roomName);
+        $newRoom->setCategoryId($categoryId);
+        $newRoom->setCapacity($capacity);
+        $newRoom->setPrice($price);
+        $newRoom->setDescription($description);
+        $newRoom->save();
+        return $newRoom;
+    }
+
+    public static function getAllRooms(){
+        $rooms = Room::all();
+        return $rooms;
+    }
+
+    public static function createRoomCategory(string $name, string $description){
+        $roomCategory = new RoomCategory();
+        $roomCategory->setName($name);
+        $roomCategory->setDescription($description);
+        $roomCategory->save();
+        return $roomCategory;
+    }
+
+    public static function editRoomCategoriesDetails(RoomCategory $roomCategory, string $name, string $description){
+        $roomCategory->setName($name);
+        $roomCategory->setDescription($description);
+        $roomCategory->save();
+        return $roomCategory;
+
+    }
+
+    
+    public static function logRoomHistory(RoomReservation $reservation)
+    {
+        $logRoomHistory = new RoomHistory();
+        $logRoomHistory->setRoomId($reservation->getRoomId());
+        $logRoomHistory->setCheckInDate($reservation->getActualCheckInDate());
+        $logRoomHistory->setCheckOutDate($reservation->getActualCheckOutDate());
+        $logRoomHistory->setGuestNumber($reservation->getGuests());
+        $logRoomHistory->save();
+    }
+
+    public static function getCheckedInGuests(): Collection
+    {
+        return RoomReservation::whereNotNull(RoomReservation::COL_ACTUALCHECKINDATE)
+            ->where(RoomReservation::COL_ACTUALCHECKINDATE, '!=', '')
+            ->get();
+    }
+
+    public static function getCheckedOutGuests(): Collection
+    {
+        return RoomReservation::whereNotNull(RoomReservation::COL_ACTUALCHECKOUTDATE)
+            ->where(RoomReservation::COL_ACTUALCHECKOUTDATE, '!=', '')
+            ->get();
     }
 }
