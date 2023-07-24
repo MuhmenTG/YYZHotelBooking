@@ -10,7 +10,6 @@ use App\Http\Resources\PaymentResource;
 use App\Http\Resources\RomResource;
 use App\Http\Resources\RoomReservationResource;
 use App\Models\Payment;
-use App\Models\Room;
 use App\Models\RoomReservation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
