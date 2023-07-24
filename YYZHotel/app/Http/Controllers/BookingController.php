@@ -161,7 +161,9 @@ class BookingController extends Controller
         }
 
         $confirmationNumber = $request->input('confirmationNumber');
+
         $reservation = BookingFactory::lookUpRoomReservation($confirmationNumber);
+        
         $payment = Payment::where(Payment::COL_CONFIRMATIONNUMBER, $confirmationNumber)->first();
 
         if (!$reservation) {
