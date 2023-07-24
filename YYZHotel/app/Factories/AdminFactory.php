@@ -2,6 +2,7 @@
 
 namespace App\Factories;
 
+use App\Models\Payment;
 use App\Models\Room;
 use App\Models\RoomCategory;
 use App\Models\RoomHistory;
@@ -92,4 +93,47 @@ class AdminFactory {
             ->where(RoomReservation::COL_ACTUALCHECKOUTDATE, '!=', '')
             ->get();
     }
+
+    public static function getUpcomingBookings(): Collection
+    {
+        return RoomReservation::whereNull(RoomReservation::COL_ACTUALCHECKINDATE)
+            ->whereNull(RoomReservation::COL_ACTUALCHECKOUTDATE)
+            ->get();
+    }
+
+    public static function getPastBookings(): Collection
+    {
+        return RoomReservation::whereNotNull(RoomReservation::COL_ACTUALCHECKINDATE)
+            ->whereNotNull(RoomReservation::COL_ACTUALCHECKOUTDATE)
+            ->get();
+    }
+
+    public static function getStaysWithinTwoDates($startDate, $endDate): Collection
+    {
+        return RoomReservation::whereDate(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $startDate)
+            ->whereDate(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $endDate)
+            ->get();
+    }
+
+    public static function getTotalNumberOfBookings()
+    {
+        $totalBookings = RoomReservation::count();
+
+        return $totalBookings;
+    }
+
+    public static function getAllPayment()
+    {
+        $allPayments = Payment::all();
+
+        return $allPayments;
+    }
+
+    public  static function getTotalPaymentAmountSinceBeginning()
+    {
+        $totalPaymentAmount = Payment::sum('paymentAmount');
+
+        return $totalPaymentAmount;
+    }
+
 }

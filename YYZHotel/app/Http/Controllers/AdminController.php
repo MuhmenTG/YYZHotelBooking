@@ -265,6 +265,8 @@ class AdminController extends Controller
         return response()->json(['CheckedOut' => $reservation], Response::HTTP_OK);
     }
 
+    // -------------------------------------------------Retrive booking stats--------------------------------------------------
+
     public function getAllCheckedInOutGuests(){
         $checkedInGuests = AdminFactory::getCheckedInGuests();
 
@@ -287,9 +289,7 @@ class AdminController extends Controller
     }
     
     public function getUpcomingGuestBookings() {
-        $upcomingBookings = RoomReservation::whereNull(RoomReservation::COL_ACTUALCHECKINDATE)
-        ->whereNull(RoomReservation::COL_ACTUALCHECKOUTDATE)
-        ->get();
+        $upcomingBookings = AdminFactory::getUpcomingBookings();
 
         if ($upcomingBookings->isEmpty()) {
             return response()->json(['message' => 'There are no upcoming booking.'], Response::HTTP_NOT_FOUND);
@@ -301,9 +301,7 @@ class AdminController extends Controller
     }
 
     public function getPastBookings(){
-        $pastBookings = RoomReservation::whereNotNull(RoomReservation::COL_ACTUALCHECKINDATE)
-        ->whereNotNull(RoomReservation::COL_ACTUALCHECKOUTDATE)
-        ->get();
+        $pastBookings = AdminFactory::getPastBookings();
 
         if ($pastBookings->isEmpty()) {
             return response()->json(['message' => 'There are no past booking.'], Response::HTTP_NOT_FOUND);
@@ -318,9 +316,7 @@ class AdminController extends Controller
         $startOfWeek = Carbon::now()->startOfWeek(); 
         $endOfWeek = Carbon::now()->endOfWeek(); 
     
-        $staysWithinThisWeek = RoomReservation::whereDate(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $startOfWeek)
-            ->whereDate(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $endOfWeek)
-            ->get();
+        $staysWithinThisWeek = AdminFactory::getStaysWithinTwoDates($startOfWeek, $endOfWeek);
     
         if ($staysWithinThisWeek->isEmpty()) {
             return response()->json(['message' => 'No stays within this week'], Response::HTTP_OK);
@@ -336,9 +332,7 @@ class AdminController extends Controller
         $startOfMonth = Carbon::now()->startOfMonth(); 
         $endOfMonth = Carbon::now()->endOfMonth();
 
-        $staysWithinThisWeek = RoomReservation::whereDate(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $startOfMonth)
-            ->whereDate(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $endOfMonth)
-            ->get();
+        $staysWithinThisWeek = AdminFactory::getStaysWithinTwoDates($startOfMonth, $endOfMonth);
     
         if ($staysWithinThisWeek->isEmpty()) {
             return response()->json(['message' => 'No stays within this month'], Response::HTTP_OK);
@@ -354,10 +348,8 @@ class AdminController extends Controller
         $startOfThreeMonths = Carbon::now()->startOfMonth()->addMonths(1); 
         $endOfThreeMonths = Carbon::now()->endOfMonth()->addMonths(3); 
 
-        $staysWithinThreeMonths = RoomReservation::whereDate(RoomReservation::COL_SCHEDULEDCHECKINDATE, '>=', $startOfThreeMonths)
-            ->whereDate(RoomReservation::COL_SCHEDULEDCHECKOUTDATE, '<=', $endOfThreeMonths)
-            ->get();
-
+        $staysWithinThreeMonths = AdminFactory::getStaysWithinTwoDates($startOfThreeMonths, $endOfThreeMonths);
+    
         if ($staysWithinThreeMonths->isEmpty()) {
             return response()->json(['message' => 'No stays within the next three months'], Response::HTTP_OK);
         }
@@ -369,8 +361,8 @@ class AdminController extends Controller
 
     public function getTotalNumberOfBookings()
     {
-        $totalBookings = RoomReservation::count();
-    
+        $totalBookings = AdminFactory::getTotalNumberOfBookings();
+
         if ($totalBookings === 0) {
             return response()->json(['message' => 'No bookings found'], 200);
         }
@@ -378,9 +370,11 @@ class AdminController extends Controller
         return response()->json(['Bookings' => $totalBookings], Response::HTTP_OK);
     }
 
+    // -------------------------------------------------Retrive financial stats--------------------------------------------------
+
     public function getAllPayment()
     {
-        $allPayments = Payment::all();
+        $allPayments = AdminFactory::getAllPayment();
 
         if ($allPayments->isEmpty()) {
             return response()->json(['message' => 'No payments found'], 200);
@@ -393,7 +387,7 @@ class AdminController extends Controller
 
     public function getTotalPaymentAmounSinceBegining()
     {
-        $totalPaymentAmount = Payment::sum('paymentAmount');
+        $totalPaymentAmount = AdminFactory::getTotalPaymentAmountSinceBeginning();
 
         if ($totalPaymentAmount === null) {
             return response()->json(['message' => 'No payments found'], 200);
