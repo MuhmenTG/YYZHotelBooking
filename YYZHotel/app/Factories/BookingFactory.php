@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 namespace App\Factories;
 
 use App\Models\Payment;
@@ -95,7 +96,7 @@ class BookingFactory {
         return $availableRooms;
     }
     
-    public static function validateRoomExistBetweenDates($roomId, $scheduledCheckInDate, $scheduledCheckOutDate)
+    public static function validateRoomExistBetweenDates(string $roomId, Carbon $scheduledCheckInDate, Carbon $scheduledCheckOutDate)
     {
         $conflictingBookings = RoomReservation::where(RoomReservation::COL_ROOMID, $roomId)
             ->where(function ($query) use ($scheduledCheckInDate, $scheduledCheckOutDate) {
@@ -140,9 +141,9 @@ class BookingFactory {
         return $room;
     }
 
-    public static function calculateTotalPrice($checkInDate, $checkOutDate, $roomId) {
-        $checkOutDate = Carbon::parse($checkOutDate);
+    public static function calculateTotalPrice(Carbon $checkInDate, Carbon $checkOutDate, int $roomId) {
         $checkInDate = Carbon::parse($checkInDate);
+        $checkOutDate = Carbon::parse($checkOutDate);
 
         $numberOfNightStay = $checkInDate->diffInDays($checkOutDate);
         $room = Room::ByRoomNumber($roomId)->first();
@@ -199,9 +200,9 @@ class BookingFactory {
             throw new \InvalidArgumentException('Invalid expiry Date of card.');
         }
         
-        /*if (!ctype_digit($expYear) || strlen($expYear) != 4 || $expYear < date('Y')) {
-    
-        }*/
+        if (!ctype_digit($expYear) || strlen($expYear) != 4 || $expYear < date('Y')) {
+
+        }
         
         if (!ctype_digit($cvc) || strlen($cvc) < 3 || strlen($cvc) > 4) {
         

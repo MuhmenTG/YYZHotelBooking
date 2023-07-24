@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Factories\AdminFactory;
 use App\Factories\BookingFactory;
 use App\Helper\Constants;
 use App\Http\Resources\PaymentResource;
@@ -37,18 +38,12 @@ class AdminController extends Controller
         }
 
         $roomName = $request->input('roomName');
-        $categoryId = $request->input('categoryId');
-        $capacity = $request->input('capacity');
-        $price = $request->input('price');
+        $categoryId = intval($request->input('categoryId'));
+        $capacity = intval($request->input('capacity'));
+        $price = floatval($request->input('price'));
         $description = $request->input('description');
 
-        $newRoom = new Room();
-        $newRoom->setRoomNumber($roomName);
-        $newRoom->setCategoryId($categoryId);
-        $newRoom->setCapacity($capacity);
-        $newRoom->setPrice($price);
-        $newRoom->setDescription($description);
-        $newRoom->save();
+        $newRoom = AdminFactory::createRoom($roomName, $categoryId, $capacity, $price, $description);
 
         if($newRoom){
             return new RomResource($newRoom);
